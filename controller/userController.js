@@ -1,84 +1,91 @@
-const fs = require('fs')
-const users = JSON.parse(fs.readFileSync('./data/users.json'))
-const getAllUsers = (req, res) => {
-  res.status(200).json({
-    status: "success",
-    count: users.length,
-    data: {
-      users: users
-    }
-  })
+
+const User = require('../models/userModel')
+
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find()
+    res.status(200).json({
+      status: 'Success',
+      user: users.length,
+      data: {
+        user: users
+      }
+    })
+  } catch (err) {
+    res.status(404).json({
+      status: "not found",
+      message: err.message
+    })
+  }
 }
 // get users by id
 
-const getUserId = (req, res) => {
-  const id = +req.params.id
-  const userById = users.find(user => user.id === id)
-  if (!userById) {
-    throw new Error("User not Found")
-  } else {
+const getUserId = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id)
     res.status(200).json({
-      status: "success",
+      status: "successfull",
       data: {
-        user: userById
+        user
       }
+    })
+  } catch (err) {
+    res.status(404).json({
+      status: 'not found',
+      message: err.message
+    })
+  }
+
+}
+
+
+// create users
+const createUser = async (req, res) => {
+  try {
+    const user = await User.create(req.body)
+    res.status(201).json({
+      status: 'success',
+      user
+    })
+  } catch (err) {
+    res.status(400).json({
+      status: "failed",
+      message: err.message
+    })
+  }
+}
+
+const updateUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true })
+    res.status(200).json({
+      status: "updated",
+      data: {
+        updatedData: user
+      }
+    })
+  } catch (err) {
+    res.status(404).json({
+      status: "not found",
+      message: err.message
     })
   }
 }
 
 
-// create users
-const createUser = (req, res) => {
-  console.log(req.body);
-  const newId = users[users.length - 1].id + 1
-  const newUser = Object.assign({ id: newId }, req.body)
-  users.push(newUser)
-  fs.writeFile('./data/users.json', JSON.stringify(users), (err) => {
-    if (err) {
-      console.log(err.message);
-    } else {
-      res.status(200).json({
-        status: "success",
-        data: {
-          users: users
-        }
-      })
-    }
-  })
-}
-
-const updateUser = (req, res) => {
-  const id = +req.params.id
-  const user = users.find(user => user.id === id)
-  const index = users.findIndex(user => user.id === id)
-  Object.assign(user, req.body)
-  users[index] = user
-  fs.writeFile('./data/users.json', JSON.stringify(users), (err) => {
-    if (err) {
-      console.log(err.message);
-    } else {
-      res.status(200).json({
-        status: 'ok',
-        data: {
-          user: user
-        }
-      })
-    }
-  })
-}
-
-
-const deleteUser = (req, res) => {
-  const id = +req.params.id
-  const userById = users.find(user => user.id === id)
-  const index = users.indexOf(userById)
-  users.splice(index, 1)
-  res.status(200).json({
-    status: "ok",
-    data: {
-      users: users
-    }
-  })
+const deleteUser = async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id)
+    res.status(204).json({
+      status: "Deleted",
+      data: null
+    })
+  } catch (err) {
+    res.status(404).json({
+      status: "not found",
+      message: err.message
+    })
+  }
 }
 
 module.exports = {
